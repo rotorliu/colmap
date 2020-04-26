@@ -116,6 +116,9 @@ class IncrementalMapper {
     // Maximum number of trials to register an image.
     int max_reg_trials = 3;
 
+    // If reconstruction is provided as input, fix the existing image poses.
+    bool fix_existing_images = false;
+
     // Number of threads.
     int num_threads = -1;
 
@@ -204,7 +207,8 @@ class IncrementalMapper {
       const image_t image_id, const std::unordered_set<point3D_t>& point3D_ids);
 
   // Global bundle adjustment using Ceres Solver or PBA.
-  bool AdjustGlobalBundle(const BundleAdjustmentOptions& ba_options);
+  bool AdjustGlobalBundle(const Options& options,
+                          const BundleAdjustmentOptions& ba_options);
   bool AdjustParallelGlobalBundle(
       const BundleAdjustmentOptions& ba_options,
       const ParallelBundleAdjuster::Options& parallel_ba_options);
@@ -282,10 +286,11 @@ class IncrementalMapper {
   std::unordered_map<image_t, size_t> init_num_reg_trials_;
   std::unordered_set<image_pair_t> init_image_pairs_;
 
-  // Cameras whose parameters have been refined in pose refinement. Used
-  // to avoid duplicate refinement of camera parameters or degradation of
-  // already refined camera parameters when multiple images share intrinsics.
-  std::unordered_set<camera_t> refined_cameras_;
+  // The number of registered images per camera. This information is used
+  // to avoid duplicate refinement of camera parameters and degradation of
+  // already refined camera parameters in local bundle adjustment when multiple
+  // images share intrinsics.
+  std::unordered_map<camera_t, size_t> num_reg_images_per_camera_;
 
   // The number of reconstructions in which images are registered.
   std::unordered_map<image_t, size_t> num_registrations_;
@@ -296,6 +301,11 @@ class IncrementalMapper {
   // Number of trials to register image in current reconstruction. Used to set
   // an upper bound to the number of trials to register an image.
   std::unordered_map<image_t, size_t> num_reg_trials_;
+
+  // Images that were registered before beginning the reconstruction.
+  // This image list will be non-empty, if the reconstruction is continued from
+  // an existing reconstruction.
+  std::unordered_set<image_t> existing_image_ids_;
 };
 
 }  // namespace colmap

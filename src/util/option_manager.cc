@@ -45,13 +45,14 @@
 #include "optim/bundle_adjustment.h"
 #include "ui/render_options.h"
 #include "util/misc.h"
+#include "util/random.h"
 #include "util/version.h"
 
 namespace config = boost::program_options;
 
 namespace colmap {
 
-OptionManager::OptionManager() {
+OptionManager::OptionManager(bool add_project_options) {
   project_path.reset(new std::string());
   database_path.reset(new std::string());
   image_path.reset(new std::string());
@@ -75,7 +76,12 @@ OptionManager::OptionManager() {
   Reset();
 
   desc_->add_options()("help,h", "");
-  desc_->add_options()("project_path", config::value<std::string>());
+
+  AddRandomOptions();
+
+  if (add_project_options) {
+    desc_->add_options()("project_path", config::value<std::string>());
+  }
 }
 
 void OptionManager::ModifyForIndividualData() {
@@ -161,6 +167,7 @@ void OptionManager::ModifyForExtremeQuality() {
 
 void OptionManager::AddAllOptions() {
   AddLogOptions();
+  AddRandomOptions();
   AddDatabaseOptions();
   AddImageOptions();
   AddExtractionOptions();
@@ -189,6 +196,15 @@ void OptionManager::AddLogOptions() {
   AddAndRegisterDefaultOption("log_level", &FLAGS_v);
 }
 
+void OptionManager::AddRandomOptions() {
+  if (added_random_options_) {
+    return;
+  }
+  added_random_options_ = true;
+
+  AddAndRegisterDefaultOption("random_seed", &kDefaultPRNGSeed);
+}
+
 void OptionManager::AddDatabaseOptions() {
   if (added_database_options_) {
     return;
@@ -213,6 +229,8 @@ void OptionManager::AddExtractionOptions() {
   }
   added_extraction_options_ = true;
 
+  AddAndRegisterDefaultOption("ImageReader.mask_path",
+                              &image_reader->mask_path);
   AddAndRegisterDefaultOption("ImageReader.camera_model",
                               &image_reader->camera_model);
   AddAndRegisterDefaultOption("ImageReader.single_camera",
@@ -225,6 +243,8 @@ void OptionManager::AddExtractionOptions() {
                               &image_reader->camera_params);
   AddAndRegisterDefaultOption("ImageReader.default_focal_length_factor",
                               &image_reader->default_focal_length_factor);
+  AddAndRegisterDefaultOption("ImageReader.camera_mask_path",
+                              &image_reader->camera_mask_path);
 
   AddAndRegisterDefaultOption("SiftExtraction.num_threads",
                               &sift_extraction->num_threads);
@@ -464,6 +484,9 @@ void OptionManager::AddMapperOptions() {
                               &mapper->ba_refine_principal_point);
   AddAndRegisterDefaultOption("Mapper.ba_refine_extra_params",
                               &mapper->ba_refine_extra_params);
+  AddAndRegisterDefaultOption(
+      "Mapper.ba_min_num_residuals_for_multi_threading",
+      &mapper->ba_min_num_residuals_for_multi_threading);
   AddAndRegisterDefaultOption("Mapper.ba_local_num_images",
                               &mapper->ba_local_num_images);
   AddAndRegisterDefaultOption("Mapper.ba_local_max_num_iterations",
@@ -493,6 +516,8 @@ void OptionManager::AddMapperOptions() {
   AddAndRegisterDefaultOption("Mapper.snapshot_path", &mapper->snapshot_path);
   AddAndRegisterDefaultOption("Mapper.snapshot_images_freq",
                               &mapper->snapshot_images_freq);
+  AddAndRegisterDefaultOption("Mapper.fix_existing_images",
+                              &mapper->fix_existing_images);
 
   // IncrementalMapper.
   AddAndRegisterDefaultOption("Mapper.init_min_num_inliers",
@@ -695,6 +720,7 @@ void OptionManager::Reset() {
   options_string_.clear();
 
   added_log_options_ = false;
+  added_random_options_ = false;
   added_database_options_ = false;
   added_image_options_ = false;
   added_extraction_options_ = false;

@@ -78,7 +78,7 @@ of commands as an alternative to the automatic reconstruction command::
         --output_path $DATASET_PATH/dense/meshed-poisson.ply
 
     $ colmap delaunay_mesher \
-        --input_path $DATASET_PATH/dense/fused.ply \
+        --input_path $DATASET_PATH/dense \
         --output_path $DATASET_PATH/dense/meshed-delaunay.ply
 
 If you want to run COLMAP on a computer without an attached display (e.g.,
@@ -197,6 +197,8 @@ available as ``colmap [command]``:
 - ``automatic_reconstruction``: Automatically reconstruct sparse and dense model
   for a set of input images.
 
+- ``project_generator``: Generate project files at different quality settings.
+
 - ``feature_extractor``, ``feature_importer``: Perform feature extraction or
   import features for a set of images.
 
@@ -221,7 +223,9 @@ available as ``colmap [command]``:
 - ``image_rectifier``: Stereo rectify cameras and undistort images for stereo
   disparity estimation.
 
-- ``image_deleter``: Delete individual images from a sparse reconstruction.
+- ``image_filterer``: Filter images from a sparse reconstruction.
+
+- ``image_deleter``: Delete specific images from a sparse reconstruction.
 
 - ``patch_match_stereo``: Dense 3D reconstruction / mapping using MVS after
   running the ``image_undistorter`` to initialize the workspace.
@@ -243,12 +247,19 @@ available as ``colmap [command]``:
 - ``point_triangulator``: Triangulate all observations of registered images in
   an existing model using the feature matches in a database.
 
+- ``point_filtering``: Filter sparse points in model by enforcing criteria,
+  such as minimum track length, maximum reprojection error, etc.
+
 - ``bundle_adjuster``: Run global bundle adjustment on a reconstructed scene,
   e.g., when a refinement of the intrinsics is needed or
   after running the ``image_registrator``.
 
 - ``database_creator``: Create an empty COLMAP SQLite database with the
   necessary database schema information.
+
+- ``database_merger``: Merge two databases into a new database. Note that the
+  cameras will not be merged and that the unique camera and image identifiers
+  might change during the merging process.
 
 - ``model_analyzer``: Print statistics about reconstructions.
 
